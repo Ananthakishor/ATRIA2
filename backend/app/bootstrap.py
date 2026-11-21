@@ -27,10 +27,13 @@ def bootstrap():
             collector = db.query(Collector.id).filter_by(id=collector_id, tenant_id=tenant_id).first()
             if not admin or not collector:
                 raise RuntimeError("Existing tenant requires administrator review")
-            # Re-apply password if env var is still set (allows password reset on redeploy)
+            # Re-apply password on every redeploy while env var is present
             password = os.environ.get("INITIAL_ADMIN_PASSWORD", "")
             if password and 24 <= len(password.encode()) <= 72:
-                admin.hashed_password = hash_password(password)
+                db.execute(
+                    text("UPDATE \"user\" SET hashed_password = :h WHERE email = :e"),
+                    {"h": hash_password(password), "e": admin.email},
+                )
             return
         if db.query(Tenant.id).first():
             raise RuntimeError("First-time setup requires an empty tenant directory")
