@@ -44,6 +44,7 @@ class Settings(BaseSettings):
             if self.frontend_origin not in {
                 "https://tesseract.cv",
                 "https://sentinelops-frontend-tau.vercel.app",
+                "https://frontend-mu-tawny-52.vercel.app",
             }:
                 raise ValueError("Set FRONTEND_ORIGIN to the approved Vercel origin")
             if len(self.secret_key.encode()) < 32 or self.secret_key.startswith("change-me"):
