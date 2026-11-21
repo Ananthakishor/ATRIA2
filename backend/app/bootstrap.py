@@ -23,10 +23,14 @@ def bootstrap():
         if db.get(Tenant, "tenant-alpha") or db.get(Tenant, "tenant-beta"):
             raise RuntimeError("Select a separate cloud database without the demo tenants")
         if db.get(Tenant, tenant_id):
-            admin = db.query(User.id).filter_by(tenant_id=tenant_id, role="admin", is_active=True).first()
+            admin = db.query(User).filter_by(tenant_id=tenant_id, role="admin", is_active=True).first()
             collector = db.query(Collector.id).filter_by(id=collector_id, tenant_id=tenant_id).first()
             if not admin or not collector:
                 raise RuntimeError("Existing tenant requires administrator review")
+            # Re-apply password if env var is still set (allows password reset on redeploy)
+            password = os.environ.get("INITIAL_ADMIN_PASSWORD", "")
+            if password and 24 <= len(password.encode()) <= 72:
+                admin.hashed_password = hash_password(password)
             return
         if db.query(Tenant.id).first():
             raise RuntimeError("First-time setup requires an empty tenant directory")
